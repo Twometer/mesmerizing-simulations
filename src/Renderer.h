@@ -16,13 +16,18 @@ private:
     Shader *drawShader;
 
     Shader *agentShader;
-    Shader *evaporateShader;
+    Shader *diffusionShader;
 
     GLuint texture;
 
     float evapSpeed = 0.01f;
     float agentSpeed = 0.025f;
+    float diffusionSpeed = 0.5f;
 
+    float sensorAngleOffset = 0.1;
+    float sensorDstOffset = 5;
+    int sensorSize = 10;
+    float turnSpeed = 0.1;
 public:
     explicit Renderer(GLFWwindow *window);
 
@@ -31,6 +36,9 @@ public:
     void render_frame();
 
     void shutdown();
+
+private:
+    void regen_agents();
 };
 
 

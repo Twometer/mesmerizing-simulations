@@ -15,7 +15,7 @@ void Renderer::initialize() {
     // Shaders
     drawShader = Loader::load_draw_shader("res/draw.vert", "res/draw.frag");
     agentShader = Loader::load_compute_shader("res/agent.glsl");
-    evaporateShader = Loader::load_compute_shader("res/evaporate.glsl");
+    diffusionShader = Loader::load_compute_shader("res/diffuse.glsl");
 
     // Textures
     glGenTextures(1, &texture);
@@ -30,16 +30,10 @@ void Renderer::initialize() {
     glfwGetFramebufferSize(window, &display_w, &display_h);
 
 
-    Agent agents[NUM_AGENTS];
-    for (int i = 0; i < NUM_AGENTS; i++) {
-        agents[i] = Agent{display_w / 2.f, display_h / 2.f, rand() / (float) RAND_MAX * 2.f * 3.1415f};
-    }
-
-
     GLuint ssbo;
     glGenBuffers(1, &ssbo);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(agents), agents, GL_STATIC_READ);
+    regen_agents();
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo);
 
     // Fullscreen quad
@@ -64,21 +58,48 @@ void Renderer::initialize() {
 void Renderer::render_frame() {
     agentShader->bind();
     agentShader->set("agentSpeed", agentSpeed);
+    agentShader->set("sensorAngleOffset", sensorAngleOffset);
+    agentShader->set("sensorDstOffset", sensorDstOffset);
+    agentShader->set("sensorSize", sensorSize);
+    agentShader->set("turnSpeed", turnSpeed);
     agentShader->dispatch(NUM_AGENTS, 1, 1);
 
-    evaporateShader->bind();
-    evaporateShader->set("evapSpeed", evapSpeed);
-    evaporateShader->dispatch(1280 / 16, 720 / 16, 1);
+    diffusionShader->bind();
+    diffusionShader->set("diffusionSpeed", diffusionSpeed);
+    diffusionShader->set("evapSpeed", evapSpeed);
+    diffusionShader->dispatch(1280 / 16, 720 / 16, 1);
+
 
     drawShader->bind();
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 
     ImGui::SliderFloat("Agent speed", &agentSpeed, 0.1, 1.0);
-    ImGui::SliderFloat("Evaporation speed", &evapSpeed, 0.001, 0.1);
+    ImGui::SliderFloat("Evaporation speed", &evapSpeed, 0.00, 1.0);
+    ImGui::SliderFloat("Diffusion speed", &diffusionSpeed, 0.0, 1.0);
+    ImGui::SliderFloat("Turn speed", &turnSpeed, 0.0, 1.0);
+
+    ImGui::SliderFloat("Sensor angle offset", &sensorAngleOffset, -0.5, 0.5);
+    ImGui::SliderFloat("Sensor distance offset", &sensorDstOffset, 0.0, 50);
+    ImGui::SliderInt("Sensor size", &sensorSize, 0, 50);
+
+    if (ImGui::Button("Reset")) {
+        regen_agents();
+    }
 }
 
 void Renderer::shutdown() {
     delete drawShader;
     delete agentShader;
+}
+
+void Renderer::regen_agents() {
+    int display_w, display_h;
+    glfwGetFramebufferSize(window, &display_w, &display_h);
+
+    Agent agents[NUM_AGENTS];
+    for (int i = 0; i < NUM_AGENTS; i++) {
+        agents[i] = Agent{display_w / 2.f, display_h / 2.f, rand() / (float) RAND_MAX * 2.f * 3.1415f};
+    }
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(agents), agents, GL_STATIC_READ);
 }
