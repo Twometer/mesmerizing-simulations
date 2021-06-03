@@ -41,3 +41,7 @@ void Shader::unbind() {
 void Shader::dispatch(GLuint x, GLuint y, GLuint z) {
     glDispatchCompute(x, y, z);
 }
+
+void Shader::set(const std::string &uniform, float value) {
+    glUniform1f(get_uniform_location(uniform), value);
+}

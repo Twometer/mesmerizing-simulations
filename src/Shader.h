@@ -21,6 +21,7 @@ public:
     void set(const std::string &uniform, const glm::mat4 &value);
     void set(const std::string &uniform, const glm::vec3 &value);
     void set(const std::string &uniform, const glm::vec4 &value);
+    void set(const std::string &uniform, float value);
 
     void bind();
     void unbind();

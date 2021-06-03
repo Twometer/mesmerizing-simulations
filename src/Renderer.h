@@ -14,9 +14,14 @@ private:
     GLFWwindow *window;
 
     Shader *drawShader;
-    Shader *computeShader;
+
+    Shader *agentShader;
+    Shader *evaporateShader;
 
     GLuint texture;
+
+    float evapSpeed = 0.01f;
+    float agentSpeed = 0.025f;
 
 public:
     explicit Renderer(GLFWwindow *window);
