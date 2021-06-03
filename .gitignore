@@ -30,3 +30,12 @@
 *.exe
 *.out
 *.app
+
+# JetBrains
+.idea/
+
+# CMake
+cmake-build-*/
+
+# IMGui
+imgui.ini
