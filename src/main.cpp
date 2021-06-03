@@ -2,6 +2,8 @@
 #include <GLFW/glfw3.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
+#include "ImguiStyle.h"
+#include "Renderer.h"
 
 int main() {
     if (!glfwInit()) {
@@ -24,6 +26,10 @@ int main() {
     ImGui::CreateContext();
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 100");
+    apply_imgui_styles();
+
+    Renderer renderer(window);
+    renderer.initialize();
 
     while (!glfwWindowShouldClose(window)) {
         ImGui_ImplOpenGL3_NewFrame();
@@ -35,7 +41,7 @@ int main() {
         glViewport(0, 0, display_w, display_h);
         glClear(GL_COLOR_BUFFER_BIT);
 
-
+        renderer.render_frame();
 
         ImGui::Render();
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -44,10 +50,10 @@ int main() {
         glfwPollEvents();
     }
 
+    renderer.shutdown();
     ImGui_ImplGlfw_Shutdown();
     glfwDestroyWindow(window);
     glfwTerminate();
-
 
     return 0;
 }

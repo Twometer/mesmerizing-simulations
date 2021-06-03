@@ -15,7 +15,7 @@ add_executable(mesmerizing_simulations
         lib/imgui/imgui_draw.cpp
         lib/imgui/imgui_impl_glfw.cpp
 
-        src/main.cpp)
+        src/main.cpp src/ImguiStyle.h src/Renderer.cpp src/Renderer.h src/Loader.cpp src/Loader.h src/Shader.cpp src/Shader.h)
 
 target_include_directories(mesmerizing_simulations PRIVATE lib/glm lib/glfw/include lib/glad/include lib/imgui)
 target_link_libraries(mesmerizing_simulations glfw ${GLFW_LIBRARIES})
