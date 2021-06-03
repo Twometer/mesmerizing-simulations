@@ -18,8 +18,8 @@ void Renderer::initialize() {
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, 512, 512, 0, GL_RED, GL_FLOAT, nullptr);
-    glBindImageTexture(0, texture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_R32F);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, 1280, 720, 0, GL_RGBA, GL_FLOAT, nullptr);
+    glBindImageTexture(0, texture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
     // Fullscreen quad
     GLuint vertArray;
@@ -43,7 +43,7 @@ void Renderer::initialize() {
 
 void Renderer::render_frame() {
     computeShader->bind();
-    computeShader->dispatch(512 / 16, 512 / 16, 1);
+    computeShader->dispatch(1280 / 16, 720 / 16, 1);
 
     drawShader->bind();
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
