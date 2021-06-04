@@ -4,9 +4,12 @@
 
 #include <imgui.h>
 #include <ctime>
+#include <fstream>
+#include <inipp/inipp.h>
 #include "Loader.h"
 #include "Renderer.h"
 #include "Agent.h"
+#include <portable-file-dialogs/portable-file-dialogs.h>
 
 #define PI (3.14159265359f)
 #define PI_2 (2.0f * PI)
@@ -113,8 +116,9 @@ void Renderer::render_frame() {
     if (showAbout) {
         bool open;
         ImGui::Begin("About", &open, ImGuiWindowFlags_AlwaysAutoResize);
-        ImGui::Text("Mesmerizing Simulator 1.0");
+        ImGui::Text("Mesmerizing Simulations 1.0.0");
         ImGui::Text("(c) 2021 made by Twometer");
+        ImGui::Separator();
         ImGui::Text("Inspired by Sebastian Lague");
         ImGui::End();
 
@@ -131,10 +135,27 @@ void Renderer::render_frame() {
             }
 
             if (ImGui::MenuItem("Save preset")) {
-
+                auto path = pfd::save_file("Load preset", ".", {"INI Presets", "*.ini"}).result();
             }
 
             if (ImGui::MenuItem("Load preset")) {
+                auto path = pfd::open_file("Load preset", ".", {"INI Presets", "*.ini"}).result();
+                if (!path.empty()) {
+                    std::ifstream file(path[0]);
+                    inipp::Ini<char> ini;
+                    ini.parse(file);
+
+                    auto agentSection = ini.sections["Agents"];
+                    auto colorSection = ini.sections["Colors"];
+                    inipp::get_value(agentSection, "MoveSpeed", agentSpeed);
+                    inipp::get_value(agentSection, "TurnSpeed", turnSpeed);
+                    inipp::get_value(agentSection, "SensorAngle", sensorAngleOffset);
+                    inipp::get_value(agentSection, "SensorDist", sensorDstOffset);
+                    inipp::get_value(agentSection, "SensorSize", sensorSize);
+                    inipp::get_value(agentSection, "DecaySpeed", evapSpeed);
+                    inipp::get_value(agentSection, "DiffusionSpeed", diffusionSpeed);
+                    inipp::get_value(agentSection, "SpawnMode", spawnMode);
+                }
 
             }
 
