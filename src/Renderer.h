@@ -9,6 +9,9 @@
 #include <GLFW/glfw3.h>
 #include "Shader.h"
 
+#define WIDTH 1920
+#define HEIGHT 1088
+
 class Renderer {
 private:
     GLFWwindow *window;
@@ -20,8 +23,8 @@ private:
 
     GLuint texture;
 
-    float evapSpeed = 0.01f;
-    float agentSpeed = 0.025f;
+    float evapSpeed = 0.8f;
+    float agentSpeed = 0.65f;
     float diffusionSpeed = 0.5f;
 
     float sensorAngleOffset = 0.1;

@@ -7,7 +7,8 @@
 #include "Renderer.h"
 #include "Agent.h"
 
-#define NUM_AGENTS 400
+
+#define NUM_AGENTS 16384
 
 Renderer::Renderer(GLFWwindow *window) : window(window) {}
 
@@ -22,7 +23,7 @@ void Renderer::initialize() {
     glBindTexture(GL_TEXTURE_2D, texture);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, 1280, 720, 0, GL_RGBA, GL_FLOAT, nullptr);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, WIDTH, HEIGHT, 0, GL_RGBA, GL_FLOAT, nullptr);
     glBindImageTexture(0, texture, 0, GL_FALSE, 0, GL_WRITE_ONLY, GL_RGBA32F);
 
     // Agent SSBO
@@ -62,30 +63,35 @@ void Renderer::render_frame() {
     agentShader->set("sensorDstOffset", sensorDstOffset);
     agentShader->set("sensorSize", sensorSize);
     agentShader->set("turnSpeed", turnSpeed);
-    agentShader->dispatch(NUM_AGENTS, 1, 1);
+    agentShader->dispatch(NUM_AGENTS / 1024, 1, 1);
 
     diffusionShader->bind();
     diffusionShader->set("diffusionSpeed", diffusionSpeed);
     diffusionShader->set("evapSpeed", evapSpeed);
-    diffusionShader->dispatch(1280 / 16, 720 / 16, 1);
-
+    diffusionShader->dispatch(WIDTH / 16, HEIGHT / 16, 1);
 
     drawShader->bind();
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 
-    ImGui::SliderFloat("Agent speed", &agentSpeed, 0.1, 1.0);
-    ImGui::SliderFloat("Evaporation speed", &evapSpeed, 0.00, 1.0);
-    ImGui::SliderFloat("Diffusion speed", &diffusionSpeed, 0.0, 1.0);
+    ImGui::Begin("Agents");
+    ImGui::SliderFloat("Move speed", &agentSpeed, 0.1, 1.0);
     ImGui::SliderFloat("Turn speed", &turnSpeed, 0.0, 1.0);
-
-    ImGui::SliderFloat("Sensor angle offset", &sensorAngleOffset, -0.5, 0.5);
-    ImGui::SliderFloat("Sensor distance offset", &sensorDstOffset, 0.0, 50);
+    ImGui::SliderFloat("Sensor angle", &sensorAngleOffset, -0.5, 0.5);
+    ImGui::SliderFloat("Sensor dist", &sensorDstOffset, 0.0, 50);
     ImGui::SliderInt("Sensor size", &sensorSize, 0, 50);
+    ImGui::End();
 
+    ImGui::Begin("Trails");
+    ImGui::SliderFloat("Decay speed", &evapSpeed, 0.00, 1.0);
+    ImGui::SliderFloat("Diffusion speed", &diffusionSpeed, 0.0, 1.0);
+    ImGui::End();
+
+    ImGui::Begin("Grid");
     if (ImGui::Button("Reset")) {
         regen_agents();
     }
+    ImGui::End();
 }
 
 void Renderer::shutdown() {
@@ -99,6 +105,8 @@ void Renderer::regen_agents() {
 
     Agent agents[NUM_AGENTS];
     for (int i = 0; i < NUM_AGENTS; i++) {
+
+
         agents[i] = Agent{display_w / 2.f, display_h / 2.f, rand() / (float) RAND_MAX * 2.f * 3.1415f};
     }
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(agents), agents, GL_STATIC_READ);

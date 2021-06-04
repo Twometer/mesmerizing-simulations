@@ -13,7 +13,7 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 
-    GLFWwindow *window = glfwCreateWindow(1280, 720, "Simulation", nullptr, nullptr);
+    GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "Simulation", nullptr, nullptr);
     if (!window) {
         glfwDestroyWindow(window);
         return 1;
