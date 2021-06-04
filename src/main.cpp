@@ -12,6 +12,7 @@ int main() {
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 
     GLFWwindow *window = glfwCreateWindow(WIDTH, HEIGHT, "Simulation", nullptr, nullptr);
     if (!window) {

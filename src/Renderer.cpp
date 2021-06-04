@@ -61,9 +61,13 @@ void Renderer::initialize() {
     glEnableVertexAttribArray(0);
 
     // Color init
-    rgb[0] = 1;
-    rgb[1] = 1;
-    rgb[2] = 1;
+    rgbLo[0] = 1;
+    rgbLo[1] = 1;
+    rgbLo[2] = 1;
+
+    rgbHi[0] = 1;
+    rgbHi[1] = 1;
+    rgbHi[2] = 1;
 }
 
 void Renderer::render_frame() {
@@ -75,13 +79,18 @@ void Renderer::render_frame() {
     agentShader->set("turnSpeed", turnSpeed);
     agentShader->dispatch(NUM_AGENTS / 1024, 1, 1);
 
+    glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
     diffusionShader->bind();
     diffusionShader->set("diffusionSpeed", diffusionSpeed);
     diffusionShader->set("evapSpeed", evapSpeed);
     diffusionShader->dispatch(WIDTH / 16, HEIGHT / 16, 1);
 
+    glMemoryBarrier(GL_ALL_BARRIER_BITS);
+
     drawShader->bind();
-    drawShader->set("colorMask", glm::vec3(rgb[0], rgb[1], rgb[2]));
+    drawShader->set("darkColor", glm::vec3(rgbLo[0], rgbLo[1], rgbLo[2]));
+    drawShader->set("brightColor", glm::vec3(rgbHi[0], rgbHi[1], rgbHi[2]));
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 
@@ -99,7 +108,8 @@ void Renderer::render_frame() {
     ImGui::End();
 
     ImGui::Begin("Grid");
-    ImGui::SliderFloat3("Color", rgb, 0, 1);
+    ImGui::SliderFloat3("Low RGB", rgbLo, 0, 1);
+    ImGui::SliderFloat3("High RGB", rgbHi, 0, 1);
     ImGui::Combo("Spawn mode", &spawnMode, "Center random\0Center circle\0Random");
     if (ImGui::Button("Reset and Respawn")) {
         regen_agents();

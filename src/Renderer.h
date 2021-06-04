@@ -30,11 +30,13 @@ private:
 
     float sensorAngleOffset = 0.1;
     float sensorDstOffset = 5;
-    float rgb[3];
+    float rgbLo[3];
+    float rgbHi[3];
     int sensorSize = 10;
     float turnSpeed = 0.1;
 
     int spawnMode = 0;
+    int agentCount;
 public:
     explicit Renderer(GLFWwindow *window);
 

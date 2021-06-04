@@ -5,8 +5,12 @@ out vec4 color;
 in vec2 texCoords;
 
 uniform sampler2D textureSampler;
-uniform vec3 colorMask;
+
+uniform vec3 darkColor;
+uniform vec3 brightColor;
 
 void main() {
-    color = vec4(texture(textureSampler, texCoords).rgb * colorMask, 1.0);
+    float val = texture(textureSampler, texCoords).r;
+    vec3 inColor = mix(darkColor, brightColor, val * val) * val;
+    color = vec4(inColor, 1.0);
 }
