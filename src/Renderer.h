@@ -20,6 +20,7 @@ private:
 
     Shader *agentShader;
     Shader *diffusionShader;
+    Shader *resetShader;
 
     GLuint texture;
 
@@ -29,8 +30,11 @@ private:
 
     float sensorAngleOffset = 0.1;
     float sensorDstOffset = 5;
+    float rgb[3];
     int sensorSize = 10;
     float turnSpeed = 0.1;
+
+    int spawnMode = 0;
 public:
     explicit Renderer(GLFWwindow *window);
 
