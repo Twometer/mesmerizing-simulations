@@ -24,19 +24,22 @@ private:
 
     GLuint texture;
 
-    float evapSpeed = 0.8f;
-    float agentSpeed = 0.65f;
+    float evapSpeed = 0.45f;
+    float agentSpeed = 0.3f;
     float diffusionSpeed = 0.5f;
 
-    float sensorAngleOffset = 0.1;
-    float sensorDstOffset = 5;
+    float sensorAngleOffset = 0.38;
+    float sensorDstOffset = 17;
     float rgbLo[3];
     float rgbHi[3];
-    int sensorSize = 10;
-    float turnSpeed = 0.1;
+    int sensorSize = 15;
+    float turnSpeed = 0.5;
 
-    int spawnMode = 0;
+    int spawnMode = 1;
     int agentCount;
+
+    bool showConfigMenu = true;
+    bool showAbout = false;
 public:
     explicit Renderer(GLFWwindow *window);
 
@@ -47,7 +50,9 @@ public:
     void shutdown();
 
 private:
-    void regen_agents();
+    void respawn_agents();
+
+    void reset_values();
 };
 
 

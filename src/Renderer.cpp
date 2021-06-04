@@ -39,7 +39,7 @@ void Renderer::initialize() {
     GLuint ssbo;
     glGenBuffers(1, &ssbo);
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssbo);
-    regen_agents();
+    respawn_agents();
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, ssbo);
 
     // Fullscreen quad
@@ -60,14 +60,7 @@ void Renderer::initialize() {
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
     glEnableVertexAttribArray(0);
 
-    // Color init
-    rgbLo[0] = 1;
-    rgbLo[1] = 1;
-    rgbLo[2] = 1;
-
-    rgbHi[0] = 1;
-    rgbHi[1] = 1;
-    rgbHi[2] = 1;
+    reset_values();
 }
 
 void Renderer::render_frame() {
@@ -93,29 +86,85 @@ void Renderer::render_frame() {
     drawShader->set("brightColor", glm::vec3(rgbHi[0], rgbHi[1], rgbHi[2]));
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
+    if (showConfigMenu) {
+        ImGui::Begin("Agents");
+        ImGui::SliderFloat("Move speed", &agentSpeed, 0.1, 1.0);
+        ImGui::SliderFloat("Turn speed", &turnSpeed, 0.0, 1.0);
+        ImGui::SliderFloat("Sensor angle", &sensorAngleOffset, -0.5, 0.5);
+        ImGui::SliderFloat("Sensor dist", &sensorDstOffset, 0.0, 50);
+        ImGui::SliderInt("Sensor size", &sensorSize, 0, 50);
+        ImGui::End();
 
-    ImGui::Begin("Agents");
-    ImGui::SliderFloat("Move speed", &agentSpeed, 0.1, 1.0);
-    ImGui::SliderFloat("Turn speed", &turnSpeed, 0.0, 1.0);
-    ImGui::SliderFloat("Sensor angle", &sensorAngleOffset, -0.5, 0.5);
-    ImGui::SliderFloat("Sensor dist", &sensorDstOffset, 0.0, 50);
-    ImGui::SliderInt("Sensor size", &sensorSize, 0, 50);
-    ImGui::End();
+        ImGui::Begin("Trails");
+        ImGui::SliderFloat("Decay speed", &evapSpeed, 0.00, 1.0);
+        ImGui::SliderFloat("Diffusion speed", &diffusionSpeed, 0.0, 1.0);
+        ImGui::End();
 
-    ImGui::Begin("Trails");
-    ImGui::SliderFloat("Decay speed", &evapSpeed, 0.00, 1.0);
-    ImGui::SliderFloat("Diffusion speed", &diffusionSpeed, 0.0, 1.0);
-    ImGui::End();
-
-    ImGui::Begin("Grid");
-    ImGui::SliderFloat3("Low RGB", rgbLo, 0, 1);
-    ImGui::SliderFloat3("High RGB", rgbHi, 0, 1);
-    ImGui::Combo("Spawn mode", &spawnMode, "Center random\0Center circle\0Random");
-    if (ImGui::Button("Reset and Respawn")) {
-        regen_agents();
+        ImGui::Begin("Grid");
+        ImGui::SliderFloat3("Low RGB", rgbLo, 0, 1);
+        ImGui::SliderFloat3("High RGB", rgbHi, 0, 1);
+        ImGui::Combo("Spawn mode", &spawnMode, "Center random\0Center circle\0Random");
+        if (ImGui::Button("Respawn agents")) {
+            respawn_agents();
+        }
+        ImGui::End();
     }
 
-    ImGui::End();
+    if (showAbout) {
+        bool open;
+        ImGui::Begin("About", &open, ImGuiWindowFlags_AlwaysAutoResize);
+        ImGui::Text("Mesmerizing Simulator 1.0");
+        ImGui::Text("(c) 2021 made by Twometer");
+        ImGui::Text("Inspired by Sebastian Lague");
+        ImGui::End();
+
+        if (!open)
+            showAbout = false;
+    }
+
+    if (ImGui::BeginMainMenuBar()) {
+        if (ImGui::BeginMenu("File")) {
+
+            if (ImGui::MenuItem("New")) {
+                reset_values();
+                respawn_agents();
+            }
+
+            if (ImGui::MenuItem("Save preset")) {
+
+            }
+
+            if (ImGui::MenuItem("Load preset")) {
+
+            }
+
+            ImGui::Separator();
+            if (ImGui::MenuItem("Exit")) {
+                exit(0);
+            }
+
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("View")) {
+            if (ImGui::MenuItem("Show config")) {
+                showConfigMenu = true;
+            }
+            if (ImGui::MenuItem("Hide config")) {
+                showConfigMenu = false;
+            }
+            ImGui::EndMenu();
+        }
+
+        if (ImGui::BeginMenu("?")) {
+            if (ImGui::MenuItem("About")) {
+                showAbout = true;
+            }
+            ImGui::EndMenu();
+        }
+
+        ImGui::EndMainMenuBar();
+    }
 }
 
 void Renderer::shutdown() {
@@ -127,7 +176,7 @@ float randomFloat() {
     return ((float) rand()) / ((float) RAND_MAX);
 }
 
-void Renderer::regen_agents() {
+void Renderer::respawn_agents() {
     int display_w, display_h;
     glfwGetFramebufferSize(window, &display_w, &display_h);
 
@@ -156,4 +205,25 @@ void Renderer::regen_agents() {
         }
     }
     glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(agents), agents, GL_STATIC_READ);
+}
+
+void Renderer::reset_values() {
+    evapSpeed = 0.45f;
+    agentSpeed = 0.3f;
+    diffusionSpeed = 0.5f;
+    sensorAngleOffset = 0.38f;
+    sensorDstOffset = 17;
+    rgbLo[0] = 0;
+    rgbLo[1] = 0.35;
+    rgbLo[2] = 1;
+
+    rgbHi[0] = 0;
+    rgbHi[1] = 1;
+    rgbHi[2] = 0.85;
+    sensorSize = 15;
+    turnSpeed = 0.5;
+    spawnMode = 1;
+    agentCount = 16384;
+    showConfigMenu = true;
+    showAbout = false;
 }
