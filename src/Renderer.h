@@ -8,6 +8,7 @@
 
 #include <GLFW/glfw3.h>
 #include "Shader.h"
+#include "Agent.h"
 
 #define WIDTH 1920
 #define HEIGHT 1088
@@ -36,10 +37,13 @@ private:
     float turnSpeed = 0.5;
 
     int spawnMode = 1;
-    int agentCount;
+    int agentCount = 16384;
 
     bool showConfigMenu = true;
     bool showAbout = false;
+
+    Agent *agents = nullptr;
+    int actualNumAgents = 0;
 public:
     explicit Renderer(GLFWwindow *window);
 

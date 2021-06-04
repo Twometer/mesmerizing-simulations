@@ -8,12 +8,12 @@
 #include <inipp/inipp.h>
 #include "Loader.h"
 #include "Renderer.h"
-#include "Agent.h"
 #include <portable-file-dialogs/portable-file-dialogs.h>
 
 #define PI (3.14159265359f)
 #define PI_2 (2.0f * PI)
-#define NUM_AGENTS 16384
+#define WORK_GROUP_SIZE 1024
+#define FPS_PERIOD 0.1f
 
 Renderer::Renderer(GLFWwindow *window) : window(window) {}
 
@@ -67,13 +67,33 @@ void Renderer::initialize() {
 }
 
 void Renderer::render_frame() {
+    static float lastTime = 0;
+    float deltaT = glfwGetTime() - lastTime;
+    lastTime = glfwGetTime();
+
+    static int fps = 0;
+    static int lastFps = 0;
+    static double lastFpsReset = 0;
+    static int fpsSamples = 0;
+
+    lastFps += (int) (1.0f / deltaT);
+    fpsSamples++;
+
+    if (glfwGetTime() - lastFpsReset > FPS_PERIOD) {
+        fps = (int)((float)lastFps / (float)fpsSamples);
+        lastFps = 0;
+        lastFpsReset = glfwGetTime();
+        fpsSamples = 0;
+    }
+
+
     agentShader->bind();
     agentShader->set("agentSpeed", agentSpeed);
     agentShader->set("sensorAngleOffset", sensorAngleOffset);
     agentShader->set("sensorDstOffset", sensorDstOffset);
     agentShader->set("sensorSize", sensorSize);
     agentShader->set("turnSpeed", turnSpeed);
-    agentShader->dispatch(NUM_AGENTS / 1024, 1, 1);
+    agentShader->dispatch(agentCount / WORK_GROUP_SIZE, 1, 1);
 
     glMemoryBarrier(GL_ALL_BARRIER_BITS);
 
@@ -106,10 +126,19 @@ void Renderer::render_frame() {
         ImGui::Begin("Grid");
         ImGui::SliderFloat3("Low RGB", rgbLo, 0, 1);
         ImGui::SliderFloat3("High RGB", rgbHi, 0, 1);
+        ImGui::Separator();
         ImGui::Combo("Spawn mode", &spawnMode, "Center random\0Center circle\0Random");
+        ImGui::SliderInt("Agent number", &agentCount, 100, 500000);
+        agentCount /= WORK_GROUP_SIZE;
+        agentCount *= WORK_GROUP_SIZE;
         if (ImGui::Button("Respawn agents")) {
             respawn_agents();
         }
+        ImGui::End();
+
+        ImGui::Begin("Debug");
+        ImGui::Text("Agent count: %d", actualNumAgents);
+        ImGui::Text("FPS: %d", fps);
         ImGui::End();
     }
 
@@ -135,18 +164,32 @@ void Renderer::render_frame() {
             }
 
             if (ImGui::MenuItem("Save preset")) {
-                auto path = pfd::save_file("Load preset", ".", {"INI Presets", "*.ini"}).result();
+                auto path = pfd::save_file("Load preset", ".", {"INI Presets (*.ini)", "*.ini"}).result();
+                if (!path.empty()) {
+                    if (path.find(".ini") == -1)
+                        path += ".ini";
+
+                    std::ofstream file(path);
+                    file << "[Agents]" << std::endl;
+                    file << "MoveSpeed=" << agentSpeed << std::endl;
+                    file << "TurnSpeed=" << turnSpeed << std::endl;
+                    file << "SensorAngle=" << sensorAngleOffset << std::endl;
+                    file << "SensorDist=" << sensorDstOffset << std::endl;
+                    file << "SensorSize=" << sensorSize << std::endl;
+                    file << "DecaySpeed=" << evapSpeed << std::endl;
+                    file << "DiffusionSpeed=" << diffusionSpeed << std::endl;
+                    file << "SpawnMode=" << spawnMode << std::endl;
+                }
             }
 
             if (ImGui::MenuItem("Load preset")) {
-                auto path = pfd::open_file("Load preset", ".", {"INI Presets", "*.ini"}).result();
+                auto path = pfd::open_file("Load preset", ".", {"INI Presets (*.ini)", "*.ini"}).result();
                 if (!path.empty()) {
                     std::ifstream file(path[0]);
                     inipp::Ini<char> ini;
                     ini.parse(file);
 
                     auto agentSection = ini.sections["Agents"];
-                    auto colorSection = ini.sections["Colors"];
                     inipp::get_value(agentSection, "MoveSpeed", agentSpeed);
                     inipp::get_value(agentSection, "TurnSpeed", turnSpeed);
                     inipp::get_value(agentSection, "SensorAngle", sensorAngleOffset);
@@ -198,14 +241,16 @@ float randomFloat() {
 }
 
 void Renderer::respawn_agents() {
+    actualNumAgents = agentCount;
     int display_w, display_h;
     glfwGetFramebufferSize(window, &display_w, &display_h);
 
     resetShader->bind();
     resetShader->dispatch(WIDTH / 16, HEIGHT / 16, 1);
 
-    Agent agents[NUM_AGENTS];
-    for (int i = 0; i < NUM_AGENTS; i++) {
+    delete[] agents;
+    agents = new Agent[agentCount];
+    for (int i = 0; i < agentCount; i++) {
         if (spawnMode == 0) {
             agents[i] = Agent{display_w / 2.f, display_h / 2.f, randomFloat() * PI_2};
         } else if (spawnMode == 1) {
@@ -225,7 +270,7 @@ void Renderer::respawn_agents() {
                               randomFloat() * PI_2};
         }
     }
-    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(agents), agents, GL_STATIC_READ);
+    glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(Agent) * agentCount, agents, GL_STATIC_READ);
 }
 
 void Renderer::reset_values() {
@@ -241,10 +286,10 @@ void Renderer::reset_values() {
     rgbHi[0] = 0;
     rgbHi[1] = 1;
     rgbHi[2] = 0.85;
-    sensorSize = 15;
+    sensorSize = 8;
     turnSpeed = 0.5;
     spawnMode = 1;
-    agentCount = 16384;
+    agentCount = 65536 * 4;
     showConfigMenu = true;
     showAbout = false;
 }
